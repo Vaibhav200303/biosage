@@ -4,6 +4,8 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-000000.svg)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.39.0-000000.svg)](https://streamlit.io/)
 
+Live demo: [biosageai.streamlit.app](https://biosageai.streamlit.app/)
+
 BioSage is an evidence-grounded biodiversity and farm-restoration assistant designed for the attached hackathon challenge and a 24-hour build. It turns a short site description into a transparent assessment: it checks whether enough environmental context is available, retrieves relevant scientific evidence, connects soil/water/land-use/biodiversity pressures, and returns practical recommendations with source links and measurable indicators.
 
 The MVP is intentionally focused on decision support rather than automated diagnosis. It uses a curated local evidence corpus and a deterministic rules engine as its safety net. Gemini is optional and can polish a grounded seed response, but it cannot add recommendations, citations, confidence values, or unsupported numeric effects.
@@ -219,4 +221,4 @@ The suite covers profile normalization/aliases, negation and qualitative parsing
 
 ## Submission status
 
-The implementation, evidence corpus, tests, CI workflow, typed UI, offline fallback, and deployment documentation are complete. The public repository is [Vaibhav200303/biosage](https://github.com/Vaibhav200303/biosage), and its Python 3.12 CI is passing. Current local verification is **32 passed**, including AppTest, with compilation and Ruff passing. Remaining submission tasks are to deploy and verify the Streamlit URL, then add the repository and live-demo links to the challenge-required DOCX.
+The implementation, evidence corpus, tests, CI workflow, typed UI, offline fallback, deployment documentation, and live demo are complete. The public repository is [Vaibhav200303/biosage](https://github.com/Vaibhav200303/biosage), and the live app is [biosageai.streamlit.app](https://biosageai.streamlit.app/). Python 3.12 CI is passing; current local verification is **32 passed**, including AppTest, with compilation and Ruff passing. The final submission DOCX is in `submission/BioSage_Hackathon_Submission_Final.docx`.
