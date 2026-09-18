@@ -31,6 +31,23 @@ def _preset_changed() -> None:
     st.session_state["biosage_memory"] = ConversationMemory(max_turns=settings.max_memory_turns)
 
 
+def _reset_conversation() -> None:
+    """Reset state before the next rerun instantiates the preset widget.
+
+    Streamlit forbids assigning a widget's keyed session-state value after that
+    widget has been created in the current run. Using this as the button callback
+    makes the assignment happen before the rerun, so the selectbox can safely
+    initialize with ``Custom``.
+    """
+
+    profile = EnvironmentalProfile()
+    st.session_state["preset_name"] = "Custom"
+    st.session_state["profile"] = profile
+    st.session_state["profile_text"] = profile.model_dump_json(indent=2)
+    st.session_state["last_response"] = None
+    st.session_state["biosage_memory"] = ConversationMemory(max_turns=settings.max_memory_turns)
+
+
 if "preset_name" not in st.session_state:
     st.session_state["preset_name"] = "Custom"
 if "profile" not in st.session_state:
@@ -63,13 +80,7 @@ with st.sidebar:
     st.header("Scenario")
     st.selectbox("Judge-ready preset", ["Custom", *presets], key="preset_name", on_change=_preset_changed)
     st.caption("Presets reset the active profile and six-turn memory so demos are repeatable.")
-    if st.button("Reset conversation"):
-        memory.clear()
-        st.session_state["last_response"] = None
-        st.session_state["profile"] = EnvironmentalProfile()
-        st.session_state["preset_name"] = "Custom"
-        st.session_state["profile_text"] = EnvironmentalProfile().model_dump_json(indent=2)
-        st.rerun()
+    st.button("Reset conversation", on_click=_reset_conversation)
     st.divider()
     st.caption("Generation mode")
     st.info("Gemini draft + grounded local seed" if settings.gemini_api_key else "Offline deterministic mode (no API key)")
