@@ -14,7 +14,7 @@ from biosage.normalization import merge_profiles
 from biosage.profiles import sample_profiles
 
 
-st.set_page_config(page_title="BioSage", page_icon="🌱", layout="wide")
+st.set_page_config(page_title="BioSage", layout="wide")
 settings = get_settings()
 presets = sample_profiles()
 
@@ -73,7 +73,7 @@ def _submit(update_text: str, query: str) -> None:
         st.error(f"BioSage could not parse this turn: {exc}")
 
 
-st.title("🌱 BioSage")
+st.title("BioSage")
 st.caption("Evidence-grounded biodiversity and land-restoration planning")
 
 with st.sidebar:
