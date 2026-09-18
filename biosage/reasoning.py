@@ -110,7 +110,7 @@ def _rules() -> tuple[Rule, ...]:
             "land_use_baseline",
             "Document the current land-use and crop-system baseline before changing it",
             "A clear land-use baseline links interventions to crop sequence, field boundaries, habitat, and operational constraints.",
-            ("land use", "crop diversity", "habitat diversity"),
+            ("land use",),
             ("baseline monitoring", "adaptive management"),
             "land use crop system crop diversity habitat baseline",
             ("Map crop or vegetation units and the current crop sequence.", "Record field margins, water features, and management constraints.", "Compare the next intervention against this baseline.",),
@@ -143,7 +143,7 @@ def _rules() -> tuple[Rule, ...]:
             "0–3 months for screening; review annually",
             ("Pollution safety requires contaminant-specific testing; habitat actions do not substitute for source control.",),
             ("pressure source", "affected area", "pressure trend"),
-            lambda p: "human_pressure" in p.provided_categories,
+            lambda p: p.pollution_pressure == "high" or p.deforestation_pressure == "high" or p.fragmentation_pressure == "high",
         ),
         Rule(
             "pollution_safety",
@@ -233,7 +233,7 @@ def _confidence(results: list[RetrievedEvidence], profile: EnvironmentalProfile,
     source_diversity = min(1.0, len({item.evidence.organization for item in results}) / 2)
     cap = 0.75 if evidence_support < 0.45 else 1.0
     cap = min(cap, 0.70) if applicability < 0.25 else cap
-    cap = min(cap, 0.70) if source_diversity < 0.5 else cap
+    cap = min(cap, 0.70) if source_diversity < 1.0 else cap
     score = min(cap, 0.5 * evidence_support + 0.3 * completeness + 0.2 * max(applicability, 0.5))
     label = "high" if score >= 0.75 else "medium" if score >= 0.5 else "low"
     return label, round(score, 3), {"evidence_support": round(evidence_support, 3), "profile_completeness": round(completeness, 3), "context_applicability": round(applicability, 3), "source_diversity": round(source_diversity, 3)}, cap
@@ -275,9 +275,15 @@ def assess(profile: EnvironmentalProfile, *, query: str = "", retriever: Evidenc
     active_rules = [rule for rule in _rules() if rule.matches(profile)]
     active_rules.sort(key=lambda rule: rule.key in generic_keys)
     for rule in active_rules:
-        results = retriever.retrieve(rule.query + " " + query, top_k=3, **tags, min_score=get_settings().retrieval_min_score)
+        # Intervention-specific tags dominate broad profile tags so, for example, a
+        # land-use baseline is not crowded out by a generic biodiversity query.
+        rule_conditions = [condition for condition in tags["conditions"] if condition in rule.query.lower()]
+        results = retriever.retrieve(rule.query, top_k=3, metrics=rule.metrics, practices=rule.practices, conditions=rule_conditions, min_score=get_settings().retrieval_min_score)
+        aligned = [item for item in results if set(rule.metrics) & set(item.evidence.metrics)]
+        if aligned:
+            results = aligned
         if not results:
-            results = retriever.retrieve(rule.query, top_k=3, min_score=0.01)
+            results = retriever.retrieve(rule.query + " " + query, top_k=3, **tags, min_score=0.01)
         if not results:
             continue
         for item in results:

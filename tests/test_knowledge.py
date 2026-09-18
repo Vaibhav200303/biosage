@@ -19,3 +19,6 @@ def test_corpus_has_required_source_families_and_metrics():
         "soil ph", "soil organic carbon", "soil moisture", "species richness", "habitat diversity",
         "temperature", "rainfall", "pollution risk", "deforestation pressure",
     } <= metrics
+    e041 = next(record for record in records if record.evidence_id == "E041")
+    assert e041.year == 2014
+    assert "May 2014" in e041.source_locator

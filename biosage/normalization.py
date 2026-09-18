@@ -13,8 +13,10 @@ ALIASES = {
     "ph": "soil_ph",
     "soil_ph": "soil_ph",
     "soil pH": "soil_ph",
+    "soil ph": "soil_ph",
     "soc": "soil_organic_carbon_pct",
     "soil carbon": "soil_organic_carbon_pct",
+    "soil organic carbon": "soil_organic_carbon_pct",
     "soil_organic_carbon": "soil_organic_carbon_pct",
     "rainfall": "rainfall_mm_year",
     "annual rainfall": "rainfall_mm_year",
@@ -46,6 +48,12 @@ def _canonical_dict(payload: dict[str, Any]) -> dict[str, Any]:
     for raw_key, value in payload.items():
         key = str(raw_key).strip()
         canonical = ALIASES.get(key, ALIASES.get(key.lower(), key))
+        if canonical == "rainfall_mm_year" and isinstance(value, str):
+            qualitative = value.strip().lower()
+            if qualitative in {"low", "scarce", "dry"}:
+                canonical, value = "water_availability", "scarce"
+            elif qualitative in {"high", "excess", "wet"}:
+                canonical, value = "water_availability", "excess"
         if canonical in {"soil_ph", "soil_organic_carbon_pct", "rainfall_mm_year", "temperature_c_mean", "species_richness"}:
             value = _coerce_number(value)
         normalized[canonical] = value
@@ -69,17 +77,39 @@ def parse_profile_text(text: str) -> dict[str, Any]:
         if match:
             result[field] = float(match.group(1))
 
-    keyword_fields = {
-        "soil_moisture": (("waterlogged",), "waterlogged"),
-        "water_availability": (("water scarce", "water scarcity", "low rainfall", "rainfall low", "rainfall is low", "drought", "dryland"), "scarce"),
-        "water_availability_excess": (("high rainfall", "wet", "excess water"), "excess"),
-        "pollution_pressure": (("polluted", "pollution", "industrial drain", "contaminated"), "high"),
-        "fragmentation_pressure": (("fragmented", "fragmentation", "isolated fields"), "high"),
-        "pollinator_presence": (("few pollinators", "low pollinator", "pollinator decline"), "low"),
-    }
-    for field, (keywords, value) in keyword_fields.items():
-        if any(keyword in lowered for keyword in keywords):
-            result[field.removesuffix("_excess")] = value
+    # Negation and explicit qualitative values win before broad positive keywords.
+    pollution_low = re.search(r"(?:no|none|without|not)\s+(?:any\s+)?(?:pollution|contamination)|not\s+polluted|not\s+contaminated|unpolluted|pollution\s+(?:is\s+)?(?:low|none)|low\s+pollution", lowered)
+    if pollution_low:
+        result["pollution_pressure"] = "none" if any(token in pollution_low.group(0) for token in ("no", "none", "without", "not polluted", "not contaminated", "unpolluted")) else "low"
+    elif re.search(r"pollution\s+(?:is\s+)?(?:high|heavy|severe)|\bheavily\s+polluted\b|\bpolluted\b|\bcontaminated\b|industrial\s+drain", lowered):
+        result["pollution_pressure"] = "high"
+    elif re.search(r"pollution\s+(?:is\s+)?moderate|moderate\s+pollution", lowered):
+        result["pollution_pressure"] = "moderate"
+
+    def qualitative_pressure(field: str, low_pattern: str, high_pattern: str) -> None:
+        absence = re.search(rf"(?:no|none|without|not)\s+(?:any\s+)?{field.replace('_pressure', '')}", lowered)
+        if absence:
+            result[field] = "none"
+            return
+        low = re.search(low_pattern, lowered)
+        high = re.search(high_pattern, lowered)
+        if low:
+            result[field] = "low"
+        elif high:
+            result[field] = "high"
+
+    qualitative_pressure("deforestation_pressure", r"(?:no|none|without|not)\s+deforestation|deforestation\s+(?:is\s+)?(?:low|none)|low\s+deforestation", r"deforestation\s+(?:is\s+)?(?:high|heavy|severe)|high\s+deforestation|forest\s+loss\s+(?:is\s+)?high")
+    qualitative_pressure("fragmentation_pressure", r"(?:no|none|without|not)\s+fragmentation|fragmentation\s+(?:is\s+)?(?:low|none)|low\s+fragmentation", r"fragmentation\s+(?:is\s+)?(?:high|heavy|severe)|high\s+fragmentation|fragmented\s+fields")
+    qualitative_pressure("pollinator_presence", r"(?:no|few|low)\s+pollinators?|pollinators?\s+(?:are\s+)?(?:low|few)|pollinator\s+decline", r"(?:high|many)\s+pollinators?|pollinators?\s+(?:are\s+)?high")
+    qualitative_pressure("habitat_diversity", r"habitat\s+diversity\s+(?:is\s+)?low|low\s+habitat\s+diversity", r"habitat\s+diversity\s+(?:is\s+)?high|high\s+habitat\s+diversity")
+    qualitative_pressure("soil_moisture", r"soil\s+moisture\s+(?:is\s+)?low|low\s+soil\s+moisture", r"soil\s+moisture\s+(?:is\s+)?high|high\s+soil\s+moisture")
+    if "waterlogged" in lowered:
+        result["soil_moisture"] = "waterlogged"
+
+    if re.search(r"(?:low rainfall|rainfall\s+(?:is\s+)?low|rainfall\s+scarce|water\s+scarce|water\s+scarcity|drought|dryland)", lowered):
+        result["water_availability"] = "scarce"
+    elif re.search(r"(?:high rainfall|rainfall\s+(?:is\s+)?high|wet|excess water)", lowered):
+        result["water_availability"] = "excess"
     if any(token in lowered for token in ("monoculture", "continuous wheat", "single crop")):
         result["crop_system"] = text.strip()
     if any(token in lowered for token in ("cropland", "farm", "field", "orchard", "pasture")):

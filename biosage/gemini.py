@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from typing import Any, Iterable
@@ -17,6 +18,9 @@ from .retrieval import EvidenceRetriever
 
 class GeminiGenerationError(RuntimeError):
     """Raised when Gemini cannot produce a grounded, schema-valid response."""
+
+
+UNSAFE_DRAFT_RE = re.compile(r"(?:\d|%|\bpercent(?:age)?\b|\bfold\b|\bdouble(?:s|d)?\b|\btriple(?:s|d)?\b|\btwice\b|\bhalf\b)", re.IGNORECASE)
 
 
 class GeminiDraft(BaseModel):
@@ -73,6 +77,9 @@ def validate_grounding(response: AssessmentResponse, supplied_ids: set[str]) -> 
 def validate_draft_grounding(draft: GeminiDraft, supplied_ids: set[str]) -> GeminiDraft:
     if not set(draft.evidence_ids) <= supplied_ids:
         raise GeminiGenerationError("Gemini draft cited evidence outside the supplied subset")
+    draft_text = " ".join([draft.profile_summary, *draft.assumptions, *draft.reasoning_chain])
+    if UNSAFE_DRAFT_RE.search(draft_text):
+        raise GeminiGenerationError("Gemini draft contains an unsupported numeric or effect claim")
     return draft
 
 
@@ -134,7 +141,7 @@ class GeminiSynthesizer:
                     raise GeminiGenerationError("Gemini draft omitted a seed citation")
                 merged = seed.model_dump()
                 merged["profile_summary"] = draft.profile_summary or seed.profile_summary
-                merged["assumptions"] = list(dict.fromkeys([*seed.assumptions, *draft.assumptions]))
+                merged["assumptions"] = list(seed.assumptions)
                 merged["reasoning_chain"] = draft.reasoning_chain
                 return AssessmentResponse.model_validate(merged)
             except Exception as exc:

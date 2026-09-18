@@ -22,6 +22,39 @@ def test_json_and_text_profile_merge_without_invented_defaults():
     assert profile.latitude is None
 
 
+def test_json_aliases_and_qualitative_rainfall_match_text():
+    json_profile = merge_profiles(None, {"land use": "cropland", "soil organic carbon": 0.3, "soil ph": 5.2, "rainfall": "low", "soil moisture": "low"})
+    text_profile = merge_profiles(None, "cropland, soil organic carbon is 0.3%, soil pH is 5.2, rainfall is low, soil moisture low")
+    assert json_profile.soil_organic_carbon_pct == text_profile.soil_organic_carbon_pct == 0.3
+    assert json_profile.soil_ph == text_profile.soil_ph == 5.2
+    assert json_profile.water_availability == text_profile.water_availability == "scarce"
+    assert json_profile.soil_moisture == text_profile.soil_moisture == "low"
+
+
+@pytest.mark.parametrize(
+    ("text", "field", "value"),
+    [
+        ("no pollution and no deforestation", "pollution_pressure", "none"),
+        ("not contaminated and no deforestation", "pollution_pressure", "none"),
+        ("pollution low, deforestation low", "pollution_pressure", "low"),
+        ("soil moisture low and habitat diversity low", "soil_moisture", "low"),
+        ("pollinators high and rainfall high", "pollinator_presence", "high"),
+        ("deforestation high", "deforestation_pressure", "high"),
+    ],
+)
+def test_qualitative_parser_handles_negation_and_order(text, field, value):
+    profile = merge_profiles(None, text)
+    assert getattr(profile, field) == value
+    if "rainfall" in text:
+        assert profile.water_availability == "excess"
+
+
+def test_negated_pollution_does_not_trigger_high_pressure():
+    profile = merge_profiles(None, "cropland with no pollution, soil pH 6, rainfall 800 mm")
+    assert profile.pollution_pressure == "none"
+    assert not any("contamination source" in item.action for item in assess(merge_profiles(profile, "soil organic carbon 0.8%, species richness 10" )).recommendations)
+
+
 def test_unknown_values_do_not_satisfy_readiness():
     profile = EnvironmentalProfile(
         soil_texture="unknown",
@@ -48,6 +81,8 @@ def test_deterministic_assessment_is_complete_and_grounded_for_presets():
     assert not any("contamination source" in item.action for item in acidic.recommendations)
     polluted = assess(sample_profiles()["Polluted fragmented farmland"])
     assert {"pollution_pressure", "fragmentation_pressure", "species_richness"} <= set(polluted.reasoning_variables)
+    land_use = next(item for item in acidic.recommendations if "land-use" in item.action)
+    assert set(land_use.evidence_ids) <= {"E040", "E008", "E031"}
 
 
 def test_tags_are_derived_from_pollution_profile_not_hardcoded_soil_defaults():
@@ -165,11 +200,36 @@ def test_injected_gemini_only_rewrites_small_draft_and_preserves_grounding():
     class Client:
         models = Models()
 
-    result = GeminiSynthesizer(client=Client(), timeout_seconds=2).generate(sample_profiles()["Semi-arid monoculture"], seed.evidence, seed=seed)
+    result = generate_assessment(sample_profiles()["Semi-arid monoculture"], synthesizer=GeminiSynthesizer(client=Client(), timeout_seconds=2))
     assert result.profile_summary == "Gemini-polished summary"
     assert result.recommendations == seed.recommendations
     assert result.evidence == seed.evidence
     assert "Confidence is a heuristic decision-support score, not a probability." in result.assumptions
+
+
+def test_gemini_numeric_effect_language_is_rejected_and_falls_back():
+    seed = assess(sample_profiles()["Semi-arid monoculture"])
+
+    class Models:
+        def generate_content(self, **kwargs):
+            class Response:
+                pass
+
+            response = Response()
+            response.text = json.dumps({
+                "profile_summary": "A 99% gain in one year",
+                "assumptions": [],
+                "reasoning_chain": ["1", "2", "3"],
+                "evidence_ids": sorted({evidence_id for recommendation in seed.recommendations for evidence_id in recommendation.evidence_ids}),
+            })
+            return response
+
+    class Client:
+        models = Models()
+
+    result = generate_assessment(sample_profiles()["Semi-arid monoculture"], synthesizer=GeminiSynthesizer(client=Client(), timeout_seconds=2))
+    assert result.profile_summary == seed.profile_summary
+    assert result.assumptions == seed.assumptions
 
 
 def test_memory_is_bounded_to_six_turns():
