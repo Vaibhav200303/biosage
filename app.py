@@ -19,8 +19,15 @@ st.set_page_config(page_title="BioSage", layout="wide")
 st.markdown(
     """
     <style>
-    button[kind="primary"], button[kind="primary"] * {
+    button[kind="primary"], button[kind="primary"] *,
+    [data-testid="stFormSubmitButton"] button,
+    [data-testid="stFormSubmitButton"] button * {
         color: #000000 !important;
+        opacity: 1 !important;
+    }
+    [data-testid="stFormSubmitButton"] button {
+        background-color: #FFFFFF !important;
+        border-color: #FFFFFF !important;
     }
     </style>
     """,
