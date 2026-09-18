@@ -66,3 +66,5 @@ Deploy `app.py` from the repository root on Streamlit Community Cloud. Configure
 2. Choose **Polluted fragmented farmland** to show source-control-first safety logic and pressure-aware reasoning.
 3. Use Chat mode with an incomplete message to show targeted clarification, then add pH/SOC/rainfall/crop details and submit a follow-up.
 4. Expand **Evidence retrieved and score trace** to show lexical, tag, applicability, metadata-penalty, source locator, and direct citation links.
+
+The **Structured form** mode exposes typed controls for land use, crop system, pH, SOC, rainfall, water/moisture, habitat, pollinators, pollution, fragmentation, and optional coordinates. **JSON** mode remains available for complete profile payloads and aliases.

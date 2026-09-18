@@ -20,6 +20,10 @@ class GeminiGenerationError(RuntimeError):
     """Raised when Gemini cannot produce a grounded, schema-valid response."""
 
 
+class GeminiTimeoutError(GeminiGenerationError):
+    """A locally enforced timeout; do not retry while the SDK worker may still run."""
+
+
 UNSAFE_DRAFT_RE = re.compile(r"(?:\d|%|\bpercent(?:age)?\b|\bfold\b|\bdouble(?:s|d)?\b|\btriple(?:s|d)?\b|\btwice\b|\bhalf\b)", re.IGNORECASE)
 
 
@@ -119,7 +123,7 @@ class GeminiSynthesizer:
             return future.result(timeout=self.timeout_seconds)
         except FutureTimeout as exc:
             future.cancel()
-            raise TimeoutError(f"Gemini call exceeded {self.timeout_seconds}s timeout") from exc
+            raise GeminiTimeoutError(f"Gemini call exceeded {self.timeout_seconds}s timeout") from exc
         finally:
             executor.shutdown(wait=False, cancel_futures=True)
 
@@ -147,7 +151,7 @@ class GeminiSynthesizer:
             except Exception as exc:
                 last_error = exc
                 message = str(exc).lower()
-                retryable = any(token in message for token in ("429", "quota", "rate", "timeout", "temporarily"))
+                retryable = not isinstance(exc, GeminiTimeoutError) and any(token in message for token in ("429", "quota", "rate", "timeout", "temporarily"))
                 if attempt >= self.max_retries or not retryable:
                     break
                 time.sleep(0.25 * (2**attempt))

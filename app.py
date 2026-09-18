@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 
 from biosage.config import get_settings
@@ -85,11 +87,48 @@ if mode == "Chat":
 else:
     with st.form(f"biosage_{mode.lower().replace(' ', '_')}_form"):
         if mode == "Structured form":
-            st.text_area("Site description or follow-up", key="structured_text", height=120, placeholder="pH 6.5; SOC 0.8%; rainfed maize; low pollinators")
+            st.caption("Optional fields are merged with the selected preset or current conversation profile.")
+            land_use = st.text_input("Land use", placeholder="rainfed cropland")
+            crop_system = st.text_input("Crop or vegetation system", placeholder="maize with bare fallow")
+            col1, col2 = st.columns(2)
+            with col1:
+                has_ph = st.checkbox("Provide soil pH")
+                soil_ph = st.number_input("Soil pH", min_value=0.0, max_value=14.0, value=6.5, step=0.1, disabled=not has_ph)
+                has_soc = st.checkbox("Provide soil organic carbon")
+                soil_soc = st.number_input("SOC (%)", min_value=0.0, max_value=100.0, value=1.0, step=0.1, disabled=not has_soc)
+                has_rainfall = st.checkbox("Provide annual rainfall")
+                rainfall = st.number_input("Rainfall (mm/year)", min_value=0.0, value=700.0, step=25.0, disabled=not has_rainfall)
+                water_options = {"Not provided": None, "scarce": "scarce", "seasonal": "seasonal", "adequate": "adequate", "excess": "excess"}
+                water = st.selectbox("Water availability", list(water_options))
+                moisture_options = {"Not provided": None, "very_low": "very_low", "low": "low", "moderate": "moderate", "high": "high", "waterlogged": "waterlogged"}
+                moisture = st.selectbox("Soil moisture", list(moisture_options))
+            with col2:
+                habitat = st.selectbox("Habitat diversity", ["Not provided", "low", "moderate", "high"])
+                pollinators = st.selectbox("Pollinator presence", ["Not provided", "low", "moderate", "high"])
+                pollution = st.selectbox("Pollution pressure", ["Not provided", "none", "low", "moderate", "high"])
+                fragmentation = st.selectbox("Fragmentation pressure", ["Not provided", "none", "low", "moderate", "high"])
+                has_coords = st.checkbox("Provide coordinates")
+                latitude = st.number_input("Latitude", min_value=-90.0, max_value=90.0, value=0.0, step=0.01, disabled=not has_coords)
+                longitude = st.number_input("Longitude", min_value=-180.0, max_value=180.0, value=0.0, step=0.01, disabled=not has_coords)
             query = st.text_input("Question", value="How can I improve biodiversity and soil resilience?")
             submitted = st.form_submit_button("Assess site", type="primary")
             if submitted:
-                _submit(st.session_state.get("structured_text", ""), query)
+                typed = {
+                    "land_use": land_use or None,
+                    "crop_system": crop_system or None,
+                    "soil_ph": soil_ph if has_ph else None,
+                    "soil_organic_carbon_pct": soil_soc if has_soc else None,
+                    "rainfall_mm_year": rainfall if has_rainfall else None,
+                    "water_availability": water_options[water],
+                    "soil_moisture": moisture_options[moisture],
+                    "habitat_diversity": None if habitat == "Not provided" else habitat,
+                    "pollinator_presence": None if pollinators == "Not provided" else pollinators,
+                    "pollution_pressure": None if pollution == "Not provided" else pollution,
+                    "fragmentation_pressure": None if fragmentation == "Not provided" else fragmentation,
+                    "latitude": latitude if has_coords else None,
+                    "longitude": longitude if has_coords else None,
+                }
+                _submit(json.dumps(typed), query)
         else:
             st.text_area("Environmental profile JSON or JSON aliases", key="profile_text", height=300)
             query = st.text_input("Question", value="How can I improve biodiversity and soil resilience?")

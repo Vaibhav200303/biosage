@@ -85,6 +85,17 @@ def test_deterministic_assessment_is_complete_and_grounded_for_presets():
     assert set(land_use.evidence_ids) <= {"E040", "E008", "E031"}
 
 
+def test_multi_turn_primary_crop_constraint_adapts_diversification_advice():
+    profile = sample_profiles()["Semi-arid monoculture"]
+    first = assess(profile)
+    response = assess(profile, query="What if I cannot stop wheat production?")
+    diversification = next(item for item in response.recommendations if "wheat" in item.action.lower() or "intercrop" in item.action.lower())
+    assert "keep" in diversification.action.lower()
+    assert "replace" not in diversification.action.lower()
+    assert "stop" not in diversification.action.lower()
+    assert any("pilot" in step.lower() for step in diversification.implementation_steps)
+
+
 def test_tags_are_derived_from_pollution_profile_not_hardcoded_soil_defaults():
     tags = derive_retrieval_tags(sample_profiles()["Polluted fragmented farmland"], "contamination near drain")
     assert "pollution risk" in tags["metrics"]

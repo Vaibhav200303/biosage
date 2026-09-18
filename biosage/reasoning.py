@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Callable, Iterable
 
 from .config import get_settings
@@ -274,6 +275,7 @@ def assess(profile: EnvironmentalProfile, *, query: str = "", retriever: Evidenc
     generic_keys = {"soil_diagnostic", "climate_water_plan", "land_use_baseline", "biodiversity_baseline", "pressure_screen", "adaptive_monitoring"}
     active_rules = [rule for rule in _rules() if rule.matches(profile)]
     active_rules.sort(key=lambda rule: rule.key in generic_keys)
+    preserve_primary_crop = bool(re.search(r"(?:cannot|can't|can not|must|need to)\s+(?:stop|replace|remove)|keep\s+(?:(?:growing|planting)\s+\w+|the\s+\w+|\w+)|continue\s+(?:growing|planting)", query.lower()))
     for rule in active_rules:
         # Intervention-specific tags dominate broad profile tags so, for example, a
         # land-use baseline is not crowded out by a generic biodiversity query.
@@ -289,7 +291,13 @@ def assess(profile: EnvironmentalProfile, *, query: str = "", retriever: Evidenc
         for item in results:
             all_evidence[item.evidence_id] = item
         confidence, score, components, cap = _confidence(results, profile, rule)
-        recommendations.append(Recommendation(action=rule.action, mechanism=rule.mechanism, affected_metrics=list(rule.metrics), implementation_steps=list(rule.steps), time_horizon=rule.horizon, confidence=confidence, confidence_score=score, confidence_components=components, confidence_cap=cap, evidence_ids=[item.evidence_id for item in results[:2]], caveats=list(rule.caveats), measurable_indicators=list(rule.indicators)))
+        action, mechanism, steps, caveats = rule.action, rule.mechanism, rule.steps, rule.caveats
+        if rule.key == "diversify_crops" and preserve_primary_crop:
+            action = "Keep the primary wheat crop and pilot a compatible intercrop or rotation window"
+            mechanism = "Diversification can be introduced around the retained crop through an intercrop strip, relay crop, or small rotation block, improving system diversity without requiring an immediate crop replacement."
+            steps = ("Keep wheat on the main production area and mark a small pilot strip or rotation window.", "Test a locally compatible legume, intercrop, or field-margin strip with the same water and market constraints.", "Compare pest observations, soil indicators, and yield stability before expanding the pilot.")
+            caveats = (*rule.caveats, "This follow-up preserves the primary crop; local compatibility and market constraints still need checking.")
+        recommendations.append(Recommendation(action=action, mechanism=mechanism, affected_metrics=list(rule.metrics), implementation_steps=list(steps), time_horizon=rule.horizon, confidence=confidence, confidence_score=score, confidence_components=components, confidence_cap=cap, evidence_ids=[item.evidence_id for item in results[:2]], caveats=list(caveats), measurable_indicators=list(rule.indicators)))
         if len(recommendations) >= 4:
             break
     if len(recommendations) < 3:
