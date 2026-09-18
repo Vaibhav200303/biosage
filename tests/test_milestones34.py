@@ -95,6 +95,15 @@ def test_multi_turn_primary_crop_constraint_adapts_diversification_advice():
     assert "stop" not in diversification.action.lower()
     assert any("pilot" in step.lower() for step in diversification.implementation_steps)
 
+    maize = profile.model_copy(update={"crop_system": "continuous maize"})
+    maize_response = assess(maize, query="What if I cannot stop maize production?")
+    maize_diversification = next(item for item in maize_response.recommendations if "crop" in item.action.lower() and "pilot" in item.action.lower())
+    assert "wheat" not in maize_diversification.action.lower()
+
+    replace_response = assess(profile, query="I must replace wheat next season")
+    replace_diversification = next(item for item in replace_response.recommendations if "continuous monoculture" in item.action.lower())
+    assert "keep the primary crop" not in replace_diversification.action.lower()
+
 
 def test_tags_are_derived_from_pollution_profile_not_hardcoded_soil_defaults():
     tags = derive_retrieval_tags(sample_profiles()["Polluted fragmented farmland"], "contamination near drain")
