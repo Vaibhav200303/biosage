@@ -15,6 +15,17 @@ from biosage.profiles import sample_profiles
 
 
 st.set_page_config(page_title="BioSage", layout="wide")
+# Keep primary action labels readable with the white-on-black theme.
+st.markdown(
+    """
+    <style>
+    button[kind="primary"], button[kind="primary"] * {
+        color: #000000 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 settings = get_settings()
 presets = sample_profiles()
 
