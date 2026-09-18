@@ -1,8 +1,8 @@
 [theme]
 base = "dark"
-primaryColor = "#9BCB63"
-backgroundColor = "#0E1511"
-secondaryBackgroundColor = "#1B2A20"
-textColor = "#F1F6EC"
+primaryColor = "#FFFFFF"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#171717"
+textColor = "#FFFFFF"
 font = "sans serif"
 showWidgetBorder = true
