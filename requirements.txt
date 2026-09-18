@@ -1,0 +1,4 @@
+pydantic>=2.7,<3
+streamlit>=1.38,<2
+scikit-learn>=1.5,<2
+google-genai>=1.0,<2
