@@ -15,4 +15,7 @@ def test_corpus_has_required_source_families_and_metrics():
     organizations = {record.organization for record in records}
     assert {"FAO", "IPCC", "USDA NRCS", "UNEP", "IPBES"} <= organizations
     metrics = {metric for record in records for metric in record.metrics}
-    assert {"soil organic carbon", "species richness", "water quality"} <= metrics
+    assert {
+        "soil ph", "soil organic carbon", "soil moisture", "species richness", "habitat diversity",
+        "temperature", "rainfall", "pollution risk", "deforestation pressure",
+    } <= metrics

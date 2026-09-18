@@ -13,6 +13,7 @@ import streamlit as st
 from biosage.config import get_settings
 from biosage.models import EnvironmentalProfile
 from biosage.profiles import sample_profiles
+from biosage.reasoning import derive_retrieval_tags
 from biosage.retrieval import get_retriever
 
 
@@ -41,12 +42,8 @@ if st.button("Retrieve grounded evidence", type="primary"):
     try:
         profile = EnvironmentalProfile.model_validate(json.loads(profile_json))
         query_context = " ".join(filter(None, [query, profile.land_use, profile.crop_system, profile.region]))
-        results = get_retriever().retrieve(
-            query_context,
-            top_k=settings.retrieval_top_k,
-            metrics=["soil organic carbon", "biodiversity", "soil moisture"],
-            min_score=settings.retrieval_min_score,
-        )
+        tags = derive_retrieval_tags(profile, query_context)
+        results = get_retriever().retrieve(query_context, top_k=settings.retrieval_top_k, **tags, min_score=settings.retrieval_min_score)
         st.subheader("Profile coverage")
         st.write(f"Categories provided: {', '.join(sorted(profile.provided_categories)) or 'none'}")
         st.json(profile.model_dump(exclude_none=True))
@@ -58,7 +55,10 @@ if st.button("Retrieve grounded evidence", type="primary"):
             with st.expander(f"{record.evidence_id} · {record.title} · score {result.score:.3f}"):
                 st.write(record.passage)
                 st.caption(f"Matched terms: {', '.join(result.matched_terms) or 'metadata only'}")
+                st.caption(f"Score trace — lexical {result.lexical_score:.3f} · tags {result.tag_score:.3f} · applicability {result.applicability_score:.3f} · penalty {result.metadata_penalty:.2f}")
+                if result.score_notes:
+                    st.caption("; ".join(result.score_notes))
                 st.caption(f"Source locator: {record.source_locator}")
-                st.markdown(f"[{record.organization} ({record.year})]({record.url})")
+                st.markdown(f"[{record.organization} ({record.year or 'n.d.'})]({record.url})")
     except Exception as exc:
         st.error(f"Please provide a valid profile JSON: {exc}")

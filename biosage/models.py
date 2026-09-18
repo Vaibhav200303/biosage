@@ -132,6 +132,8 @@ class RetrievedEvidence(BaseModel):
     lexical_score: float = Field(ge=0, le=1)
     tag_score: float = Field(ge=0, le=1)
     applicability_score: float = Field(ge=0, le=1)
+    metadata_penalty: float = Field(default=0, ge=0, le=1)
+    score_notes: list[str] = Field(default_factory=list)
     matched_terms: list[str] = Field(default_factory=list)
     filter_matches: list[str] = Field(default_factory=list)
 
@@ -151,6 +153,9 @@ class Recommendation(BaseModel):
     implementation_steps: list[str] = Field(min_length=1)
     time_horizon: str
     confidence: Literal["low", "medium", "high"]
+    confidence_score: float = Field(ge=0, le=1)
+    confidence_components: dict[str, float] = Field(default_factory=dict)
+    confidence_cap: float = Field(default=1.0, ge=0, le=1)
     evidence_ids: list[str] = Field(min_length=1)
     caveats: list[str] = Field(default_factory=list)
     measurable_indicators: list[str] = Field(default_factory=list)
@@ -172,6 +177,14 @@ class AssessmentResponse(BaseModel):
 
     @model_validator(mode="after")
     def validate_status_contract(self) -> "AssessmentResponse":
+        evidence_ids = [item.evidence_id for item in self.evidence]
+        if len(evidence_ids) != len(set(evidence_ids)):
+            raise ValueError("response evidence IDs must be unique")
+        evidence_id_set = set(evidence_ids)
+        cited_ids = {evidence_id for item in self.recommendations for evidence_id in item.evidence_ids}
+        if not cited_ids <= evidence_id_set:
+            unknown = sorted(cited_ids - evidence_id_set)
+            raise ValueError(f"recommendations cite unknown evidence IDs: {unknown}")
         if self.status == "needs_clarification":
             if self.recommendations:
                 raise ValueError("clarification responses cannot contain recommendations")
@@ -186,4 +199,6 @@ class AssessmentResponse(BaseModel):
                 raise ValueError("complete responses need a multi-step reasoning chain")
             if len(set(self.reasoning_variables)) < 3:
                 raise ValueError("complete responses need three distinct reasoning variables")
+            if not self.evidence:
+                raise ValueError("complete responses need grounded evidence")
         return self

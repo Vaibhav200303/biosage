@@ -13,7 +13,7 @@ class Settings(BaseModel):
     gemini_api_key: str | None = None
     gemini_model: str = Field(default="gemini-3.5-flash-lite")
     retrieval_top_k: int = Field(default=6, ge=1, le=20)
-    retrieval_min_score: float = Field(default=0.02, ge=0, le=1)
+    retrieval_min_score: float = Field(default=0.05, ge=0.01, le=1)
     max_memory_turns: int = Field(default=6, ge=1, le=20)
 
 
@@ -37,5 +37,5 @@ def get_settings() -> Settings:
         gemini_api_key=key,
         gemini_model=os.getenv("BIOSAGE_GEMINI_MODEL", "gemini-3.5-flash-lite"),
         retrieval_top_k=int(os.getenv("BIOSAGE_RETRIEVAL_TOP_K", "6")),
-        retrieval_min_score=float(os.getenv("BIOSAGE_RETRIEVAL_MIN_SCORE", "0.02")),
+        retrieval_min_score=float(os.getenv("BIOSAGE_RETRIEVAL_MIN_SCORE", "0.05")),
     )

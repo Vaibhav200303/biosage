@@ -51,12 +51,15 @@ class RetrievalTrace:
     lexical_score: float
     tag_score: float
     applicability_score: float
+    metadata_penalty: float = 0.0
+    score_notes: tuple[str, ...] = ()
 
     @property
     def final_score(self) -> float:
         """Weighted relevance score; this is not a probability or confidence."""
 
-        return min(1.0, 0.65 * self.lexical_score + 0.2 * self.tag_score + 0.15 * self.applicability_score)
+        base = min(1.0, 0.65 * self.lexical_score + 0.2 * self.tag_score + 0.15 * self.applicability_score)
+        return max(0.0, base * (1.0 - self.metadata_penalty))
 
 
 class EvidenceRetriever:
@@ -124,7 +127,7 @@ class EvidenceRetriever:
         metrics: Iterable[str] | None = None,
         conditions: Iterable[str] | None = None,
         practices: Iterable[str] | None = None,
-        min_score: float = 0.0,
+        min_score: float = 0.05,
     ) -> list[RetrievedEvidence]:
         """Return traceable records ranked by lexical + tag/applicability score.
 
@@ -142,12 +145,12 @@ class EvidenceRetriever:
         ranked: list[RetrievedEvidence] = []
         for index, record in enumerate(self.records):
             trace = self._metadata_score(record, query, metric_set, practice_set, condition_set)
-            trace = RetrievalTrace(lexical[index], trace.tag_score, trace.applicability_score)
             requested = metric_set | condition_set | practice_set
             matched_tags = sorted(requested & (set(record.metrics) | set(record.conditions) | set(record.practices)))
+            penalty = 0.35 if requested and not matched_tags else 0.0
+            notes = ("No requested metadata matched; applied 0.35 relevance penalty.",) if penalty else ()
+            trace = RetrievalTrace(lexical[index], trace.tag_score, trace.applicability_score, penalty, notes)
             score = trace.final_score
-            if requested and not matched_tags:
-                score *= 0.65
             if score < min_score:
                 continue
             query_terms = set(_tokens(query))
@@ -159,6 +162,8 @@ class EvidenceRetriever:
                     lexical_score=round(trace.lexical_score, 6),
                     tag_score=round(trace.tag_score, 6),
                     applicability_score=round(trace.applicability_score, 6),
+                    metadata_penalty=trace.metadata_penalty,
+                    score_notes=list(trace.score_notes),
                     matched_terms=matched_terms,
                     filter_matches=matched_tags,
                 )

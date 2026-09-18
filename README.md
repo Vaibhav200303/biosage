@@ -1,6 +1,6 @@
 # BioSage
 
-BioSage is a Streamlit MVP for evidence-grounded biodiversity and farm-restoration planning. The current foundation provides typed environmental profiles, judge-ready presets, a local 40-record evidence corpus, and a traceable TF-IDF retriever. Gemini synthesis and deterministic recommendations are added in the next milestone.
+BioSage is a Streamlit MVP for evidence-grounded biodiversity and farm-restoration planning. It provides typed environmental profiles, deterministic text/JSON normalization, targeted clarification, explainable rule-based recommendations, a local evidence corpus, traceable TF-IDF retrieval, bounded conversation memory, and lazy Gemini drafting with a deterministic fallback.
 
 ## Run locally
 
