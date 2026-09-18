@@ -1,5 +1,9 @@
 # BioSage
 
+[![BioSage CI](https://github.com/Vaibhav200303/biosage/actions/workflows/ci.yml/badge.svg)](https://github.com/Vaibhav200303/biosage/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-000000.svg)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.39.0-000000.svg)](https://streamlit.io/)
+
 BioSage is an evidence-grounded biodiversity and farm-restoration assistant designed for the attached hackathon challenge and a 24-hour build. It turns a short site description into a transparent assessment: it checks whether enough environmental context is available, retrieves relevant scientific evidence, connects soil/water/land-use/biodiversity pressures, and returns practical recommendations with source links and measurable indicators.
 
 The MVP is intentionally focused on decision support rather than automated diagnosis. It uses a curated local evidence corpus and a deterministic rules engine as its safety net. Gemini is optional and can polish a grounded seed response, but it cannot add recommendations, citations, confidence values, or unsupported numeric effects.
@@ -169,7 +173,7 @@ pytest -q
 python -m compileall -q biosage app.py
 ```
 
-The suite covers profile normalization/aliases, negation and qualitative parsing, readiness, corpus validation, TF-IDF and forced fallback retrieval, zero-overlap filtering, rule grounding, confidence/citation integrity, Gemini malformed/numeric fallback, memory bounds, the constrained crop follow-up, and Streamlit AppTest reset behavior. GitHub Actions in `.github/workflows/ci.yml` runs compilation and tests on Python 3.12 for pushes and pull requests. The current dependency-enabled local result is **32 passed**, including the unskipped AppTest; compilation, Ruff, and diff checks also pass. The available local virtual environment reports Python 3.14.6, so a clean Python 3.12 verification remains part of deployment validation.
+The suite covers profile normalization/aliases, negation and qualitative parsing, readiness, corpus validation, TF-IDF and forced fallback retrieval, zero-overlap filtering, rule grounding, confidence/citation integrity, Gemini malformed/numeric fallback, memory bounds, the constrained crop follow-up, and Streamlit AppTest reset behavior. GitHub Actions in `.github/workflows/ci.yml` runs compilation and tests on Python 3.12 for pushes and pull requests. The current dependency-enabled local result is **32 passed**, including the unskipped AppTest; compilation, Ruff, and diff checks also pass. The same suite and editable installation pass on GitHub Actions with Python 3.12.
 
 ## Streamlit Cloud deployment
 
@@ -215,4 +219,4 @@ The suite covers profile normalization/aliases, negation and qualitative parsing
 
 ## Submission status
 
-The local implementation, evidence corpus, tests, CI workflow, typed UI, offline fallback, and deployment documentation are complete. Current dependency-enabled local verification is **32 passed**, including AppTest, with compilation and Ruff passing. Repository and live-demo URLs are not yet published in this workspace. Remaining submission tasks are: verify in a clean Python 3.12 environment, publish the repository, deploy and verify the Streamlit URL, and attach the final challenge-required DOCX with repository and demo links.
+The implementation, evidence corpus, tests, CI workflow, typed UI, offline fallback, and deployment documentation are complete. The public repository is [Vaibhav200303/biosage](https://github.com/Vaibhav200303/biosage), and its Python 3.12 CI is passing. Current local verification is **32 passed**, including AppTest, with compilation and Ruff passing. Remaining submission tasks are to deploy and verify the Streamlit URL, then add the repository and live-demo links to the challenge-required DOCX.
