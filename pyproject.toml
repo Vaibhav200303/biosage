@@ -8,14 +8,14 @@ version = "0.1.0"
 description = "Evidence-grounded biodiversity and farm restoration assistant"
 requires-python = ">=3.12"
 dependencies = [
-  "pydantic>=2.7,<3",
-  "streamlit>=1.38,<2",
-  "scikit-learn>=1.5,<2",
-  "google-genai>=1.0,<2",
+  "pydantic==2.13.4",
+  "streamlit==1.39.0",
+  "scikit-learn==1.5.2",
+  "google-genai==1.75.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0,<9", "ruff>=0.6,<1"]
+dev = ["pytest==8.4.2", "ruff==0.16.3"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

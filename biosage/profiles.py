@@ -6,7 +6,6 @@ from copy import deepcopy
 
 from .models import EnvironmentalProfile
 
-
 SAMPLE_PROFILES: dict[str, EnvironmentalProfile] = {
     "Semi-arid monoculture": EnvironmentalProfile(
         region="Deccan semi-arid plateau",

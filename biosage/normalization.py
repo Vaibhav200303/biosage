@@ -8,7 +8,6 @@ from typing import Any
 
 from .models import EnvironmentalProfile
 
-
 ALIASES = {
     "ph": "soil_ph",
     "soil_ph": "soil_ph",

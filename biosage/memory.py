@@ -40,6 +40,6 @@ def memory_from_session(session_state: object, key: str = "biosage_memory", max_
         memory = ConversationMemory(max_turns=max_turns)
         try:
             session_state[key] = memory  # type: ignore[index]
-        except Exception:
-            pass
+        except (AttributeError, KeyError, TypeError):
+            return memory
     return memory

@@ -7,6 +7,7 @@ venv/
 .env
 .streamlit/secrets.toml
 .streamlit/*.toml
+!.streamlit/config.toml
 !.streamlit/secrets.example.toml
 *.egg-info/
 tmp/

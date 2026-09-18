@@ -89,7 +89,7 @@ class NumericClaim(BaseModel):
     caveat: str | None = None
 
     @model_validator(mode="after")
-    def at_least_one_bound(self) -> "NumericClaim":
+    def at_least_one_bound(self) -> NumericClaim:
         if self.lower is None and self.upper is None:
             raise ValueError("a numeric claim needs at least a lower or upper bound")
         if self.lower is not None and self.upper is not None and self.lower > self.upper:
@@ -176,7 +176,7 @@ class AssessmentResponse(BaseModel):
     evidence: list[RetrievedEvidence] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_status_contract(self) -> "AssessmentResponse":
+    def validate_status_contract(self) -> AssessmentResponse:
         evidence_ids = [item.evidence_id for item in self.evidence]
         if len(evidence_ids) != len(set(evidence_ids)):
             raise ValueError("response evidence IDs must be unique")

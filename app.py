@@ -13,7 +13,6 @@ from biosage.models import AssessmentResponse, EnvironmentalProfile
 from biosage.normalization import merge_profiles
 from biosage.profiles import sample_profiles
 
-
 st.set_page_config(page_title="BioSage", layout="wide")
 # Keep primary action labels readable with the white-on-black theme.
 st.markdown(
@@ -86,7 +85,7 @@ def _submit(update_text: str, query: str) -> None:
         response = generate_assessment(profile, query=query, memory=memory.as_prompt())
         memory.add("assistant", response.profile_summary or response.status)
         st.session_state["last_response"] = response
-    except Exception as exc:
+    except (TypeError, ValueError, RuntimeError) as exc:
         st.session_state["last_response"] = None
         st.error(f"BioSage could not parse this turn: {exc}")
 

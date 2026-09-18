@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
-from typing import Callable, Iterable
+from collections.abc import Callable
+from dataclasses import dataclass
 
 from .config import get_settings
 from .models import AssessmentResponse, EnvironmentalProfile, Recommendation, RetrievedEvidence

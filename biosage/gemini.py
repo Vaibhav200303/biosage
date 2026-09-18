@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
-from typing import Any, Iterable
+from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -148,7 +150,7 @@ class GeminiSynthesizer:
                 merged["assumptions"] = list(seed.assumptions)
                 merged["reasoning_chain"] = draft.reasoning_chain
                 return AssessmentResponse.model_validate(merged)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - SDK, schema, quota, and transport failures all fail closed.
                 last_error = exc
                 message = str(exc).lower()
                 retryable = not isinstance(exc, GeminiTimeoutError) and any(token in message for token in ("429", "quota", "rate", "timeout", "temporarily"))

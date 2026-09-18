@@ -2,10 +2,21 @@ import json
 
 import pytest
 
-from biosage.gemini import GeminiGenerationError, GeminiSynthesizer, generate_assessment, validate_grounding
-from biosage.models import AssessmentResponse, EnvironmentalProfile, EvidenceRecord, Recommendation, RetrievedEvidence
-from biosage.normalization import clarification_questions, merge_profiles
+from biosage.gemini import (
+    GeminiGenerationError,
+    GeminiSynthesizer,
+    generate_assessment,
+    validate_grounding,
+)
 from biosage.memory import ConversationMemory
+from biosage.models import (
+    AssessmentResponse,
+    EnvironmentalProfile,
+    EvidenceRecord,
+    Recommendation,
+    RetrievedEvidence,
+)
+from biosage.normalization import clarification_questions, merge_profiles
 from biosage.profiles import sample_profiles
 from biosage.reasoning import assess, derive_retrieval_tags
 from biosage.retrieval import EvidenceRetriever
@@ -87,7 +98,6 @@ def test_deterministic_assessment_is_complete_and_grounded_for_presets():
 
 def test_multi_turn_primary_crop_constraint_adapts_diversification_advice():
     profile = sample_profiles()["Semi-arid monoculture"]
-    first = assess(profile)
     response = assess(profile, query="What if I cannot stop wheat production?")
     diversification = next(item for item in response.recommendations if "wheat" in item.action.lower() or "intercrop" in item.action.lower())
     assert "keep" in diversification.action.lower()
@@ -113,7 +123,7 @@ def test_tags_are_derived_from_pollution_profile_not_hardcoded_soil_defaults():
 
 
 def test_forced_dependency_free_fallback_has_nonzero_lexical_score(monkeypatch):
-    import biosage.retrieval as retrieval
+    from biosage import retrieval
 
     monkeypatch.setattr(retrieval, "TfidfVectorizer", None)
     monkeypatch.setattr(retrieval, "cosine_similarity", None)

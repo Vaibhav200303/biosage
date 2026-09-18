@@ -25,7 +25,7 @@ def _streamlit_secret(name: str) -> str | None:
 
         value = st.secrets.get(name)
         return str(value) if value else None
-    except Exception:
+    except Exception:  # noqa: BLE001 - Streamlit is optional and secrets access is a fallback boundary.
         return None
 
 

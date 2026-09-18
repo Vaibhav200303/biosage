@@ -10,9 +10,9 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable
 
 from .knowledge import load_knowledge_base
 from .models import EvidenceRecord, RetrievedEvidence
