@@ -6,7 +6,7 @@
 
 Live demo: [biosageai.streamlit.app](https://biosageai.streamlit.app/)
 
-BioSage is an evidence-grounded biodiversity and farm-restoration assistant designed for the attached hackathon challenge and a 24-hour build. It turns a short site description into a transparent assessment: it checks whether enough environmental context is available, retrieves relevant scientific evidence, connects soil/water/land-use/biodiversity pressures, and returns practical recommendations with source links and measurable indicators.
+BioSage is an evidence-grounded biodiversity and farm-restoration assistant designed for the attached hackathon challenge. It turns a short site description into a transparent assessment: it checks whether enough environmental context is available, retrieves relevant scientific evidence, connects soil/water/land-use/biodiversity pressures, and returns practical recommendations with source links and measurable indicators.
 
 The MVP is intentionally focused on decision support rather than automated diagnosis. It uses a curated local evidence corpus and a deterministic rules engine as its safety net. Gemini is optional and can polish a grounded seed response, but it cannot add recommendations, citations, confidence values, or unsupported numeric effects.
 
