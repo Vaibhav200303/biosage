@@ -181,7 +181,7 @@ The suite covers profile normalization/aliases, negation and qualitative parsing
 
 1. Push the repository to a public or reviewer-accessible GitHub repository.
 2. In Streamlit Community Cloud, create an app from branch **`master`** with entrypoint **`app.py`**.
-3. In **Advanced settings**, choose **Python 3.12**. `runtime.txt` is not needed.
+3. The repository includes `runtime.txt` to pin the cloud build to Python 3.12. If the Cloud UI offers an **Advanced settings** Python selector, choose **Python 3.12** there as well.
 4. Community Cloud installs the root **`requirements.txt`**. `pyproject.toml` is used for local editable/dev installation and CI.
 5. Add `GEMINI_API_KEY = "..."` under the app’s Secrets settings if Gemini drafting is desired. The key is optional; offline deterministic mode works without it.
 6. Open the deployed URL and run all three preset demos from a clean browser session.
