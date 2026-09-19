@@ -9,8 +9,9 @@ description = "Evidence-grounded biodiversity and farm restoration assistant"
 requires-python = ">=3.12"
 dependencies = [
   "pydantic==2.13.4",
-  "streamlit==1.39.0",
-  "scikit-learn==1.5.2",
+  "streamlit==1.64.0",
+  "scikit-learn==1.7.2",
+  "Pillow==12.3.0",
   "google-genai==1.75.0",
 ]
 
